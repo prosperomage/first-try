@@ -1,0 +1,16 @@
+{
+  "name": "first-try",
+  "version": "1.0.0",
+  "description": "my journey into backend",
+  "license": "ISC",
+  "author": "Omage Jehoshaphat",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
