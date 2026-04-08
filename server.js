@@ -55,7 +55,7 @@ app.patch("/users/:id", (req, res) => {
 });
 
 //delete
-app.delete("/users/id", (req, res) => {
+app.delete("/users/:id", (req, res) => {
   const id = parseInt(req.params.id);
   const index = users.findIndex((u) => u.id === id);
 
