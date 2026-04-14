@@ -1,29 +1,43 @@
-import { User } from "../models/user.models.js";
+// import { User } from "../models/user.models.js";
+
+import { prisma } from "../lib/prisma.js";
 
 const RegisterUser = async (req, res) => {
   try {
-    const { username, email, passsword } = req.body;
+    const { firstName, lastName, email, password } = req.body;
     //basic validation
-    if (!username) {
+    if (!firstName) {
       return res.status(400).json({ message: "all fields should be filled" });
     }
 
     //check if user exists
-    const existing = await User.findOne({ email: email.toLowerCase() });
-    if (existing) {
-      return res.status(400).json({ message: "user already exists" });
-    }
-
-    //create a user
-    const user = await User.create({
-      username,
-      email: email.toLowerCase(),
-      passsword,
-      loggeedIn: false,
+    const existingUser = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
     });
+
+    if (existingUser) {
+      return res.status(400).json({ message: "Email is already registered" });
+     
+    }
+   
+
+    // 2. Hash the password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // 3. Save to MySQL
+    const user = await prisma.user.create({
+      data: {
+        firstName,
+        lastName,
+        email: email.toLowerCase(),
+        password: hashedPassword,
+      },
+    });
+      console.log('user has been registered')
     res.status(201).json({
-      message: "user has been created",
-      user: { id: user._id, email: user.email, username: user.username },
+      message: "User created successfully",
+      user: { id: user.id, firstName: user.firstName },
     });
   } catch (error) {
     res
@@ -37,27 +51,35 @@ const loginUser = async (req, res) => {
     //check if the user exists
     const { email, password } = req.body;
 
-    const user = await User.findOne({
-      email: email.toLowerCase(),
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
     });
+
     if (!user) {
-      return res.status(400).json({ message: "user does not exist" });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    //compare the passwords
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) return res.status(400)({ message: "invalid credentials" });
+    // 2. Compare the plain-text password with the hash in DB
+    const isMatch = await bcrypt.compare(password, user.password);
 
-    res.status(200)({
-      message: "user logged in",
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // 3. Success! Send user info back
+    res.status(200).json({
+      message: "Login successful",
       user: {
-        id: user._id,
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
-        username: user.username,
+        role: user.role,
       },
     });
+      console.log('user has been logged in')
   } catch (error) {
-    res.status(500)({ message: "internal server error", error });
+    res.status(500).json({ message: "internal server error", error });
   }
 };
 
@@ -67,12 +89,14 @@ const logoutUser = async (req, res) => {
 
     const { email } = req.body;
 
-    const user = await User.findOne({
-      email: email.toLowerCase(),
+  
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
     });
 
-    if (!user)
-      return res.status(400).json({ message: "user cannot be logged out" });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
 
     res.status(200).json({
       message: "logged out successfully ",
@@ -81,7 +105,7 @@ const logoutUser = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: "internal server error",error });
+    res.status(500).json({ message: "internal server error", error });
   }
 };
 
