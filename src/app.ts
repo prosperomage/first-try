@@ -35,12 +35,14 @@ const swaggerSpec = swaggerJsdoc(options);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 //routes will be here
-import userRouter from "./routes/user.routes.js";
-import PostRouter from "./routes/post.routes.js";
+import userRouter from "./routes/user.routes.ts";
+import internRouter from "./routes/internship.routes.ts"
+
 
 //routes declaration
 app.use("/api/v1/users", userRouter);
-app.use("/api/v1/posts", PostRouter);
+app.use("/api/v1/internships", internRouter )
+
 
 //example route http://localhost:4000/api/v1/users/register
 
